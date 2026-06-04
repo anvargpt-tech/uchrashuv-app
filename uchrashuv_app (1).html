@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Uchrashuv Taklifi 💌</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --rose: #e8356d;
+  --rose-light: #ff6b9d;
+  --rose-pale: #fff0f5;
+  --rose-deep: #a01040;
+  --cream: #fdf6f0;
+  --text: #2a1520;
+  --text-soft: #8a5565;
+  --border: rgba(232,53,109,0.18);
+  --white: #ffffff;
+  --shadow: 0 8px 40px rgba(160,16,64,0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  background: var(--cream);
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* ─── CONFIG SCREEN ─── */
+.config-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background: linear-gradient(160deg, #fff0f5 0%, #fdf6f0 100%);
+}
+.config-logo { font-size: 52px; margin-bottom: 12px; }
+.config-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px; font-weight: 600;
+  color: var(--rose-deep);
+  text-align: center;
+  margin-bottom: 6px;
+}
+.config-sub { font-size: 13px; color: var(--text-soft); text-align: center; margin-bottom: 32px; line-height: 1.5; }
+.config-card {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 24px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: var(--shadow);
+}
+.config-label { font-size: 11px; font-weight: 500; color: var(--text-soft); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px; }
+.config-input {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  background: var(--rose-pale);
+  margin-bottom: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.config-input:focus { border-color: var(--rose); }
+.config-hint {
+  background: #fff8e1;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 12px;
+  color: #7a5c00;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+.btn-primary {
+  width: 100%;
+  background: linear-gradient(135deg, var(--rose-light), var(--rose));
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 15px;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(232,53,109,0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-primary:active { transform: scale(0.97); box-shadow: 0 2px 10px rgba(232,53,109,0.25); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ─── SURVEY WRAPPER ─── */
+.survey { display: none; min-height: 100vh; }
+.survey.show { display: block; }
+
+/* ─── STEP INDICATOR ─── */
+.step-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px 24px 0;
+}
+.step-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: rgba(232,53,109,0.2);
+  transition: all 0.3s;
+}
+.step-dot.active { background: var(--rose); width: 24px; border-radius: 4px; }
+.step-dot.done { background: rgba(232,53,109,0.5); }
+
+/* ─── STEP 1 — ROMANTIC ─── */
+.step { display: none; }
+.step.active { display: block; }
+
+.s1-wrap {
+  min-height: 100vh;
+  background: linear-gradient(170deg, #ffe4ef 0%, #ffd6e7 40%, #fff0f5 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.petals-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+.s1-emoji { font-size: 64px; margin-bottom: 20px; position: relative; z-index: 2; animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+
+.s1-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 30px; font-weight: 600;
+  color: var(--rose-deep);
+  line-height: 1.3;
+  margin-bottom: 12px;
+  position: relative; z-index: 2;
+}
+.s1-sub {
+  font-size: 15px; color: #c0486a;
+  margin-bottom: 44px;
+  position: relative; z-index: 2;
+  line-height: 1.6;
+}
+.s1-buttons { position: relative; z-index: 2; width: 100%; }
+.btn-yes {
+  display: block; width: 100%;
+  background: linear-gradient(135deg, var(--rose-light), var(--rose));
+  color: white; border: none;
+  border-radius: 50px;
+  padding: 17px;
+  font-size: 18px; font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  margin-bottom: 14px;
+  box-shadow: 0 6px 24px rgba(232,53,109,0.4);
+  transition: transform 0.15s;
+}
+.btn-yes:active { transform: scale(0.97); }
+.btn-no {
+  position: fixed;
+  background: rgba(255,255,255,0.85);
+  color: var(--rose);
+  border: 1.5px solid var(--rose);
+  border-radius: 50px;
+  padding: 12px 28px;
+  font-size: 15px;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  transition: none;
+  white-space: nowrap;
+}
+
+/* ─── CARDS ─── */
+.card {
+  background: var(--white);
+  border-radius: 24px;
+  margin: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 24px rgba(160,16,64,0.08);
+}
+.card-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 600;
+  color: var(--rose-deep);
+  margin-bottom: 4px;
+}
+.card-sub { font-size: 13px; color: var(--text-soft); margin-bottom: 20px; }
+
+/* ─── CALENDAR ─── */
+.cal-nav-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.cal-arrow {
+  width: 36px; height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--rose-pale);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--rose);
+}
+.cal-month {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px; font-weight: 600;
+  color: var(--text);
+}
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+.cal-dow {
+  text-align: center; font-size: 10px; font-weight: 500;
+  color: var(--text-soft); padding: 4px 0 8px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.cal-day {
+  aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; border-radius: 50%;
+  cursor: pointer; color: var(--text);
+  transition: all 0.15s;
+}
+.cal-day:not(.past):not(.empty):hover { background: var(--rose-pale); color: var(--rose); }
+.cal-day.today { font-weight: 500; color: var(--rose); border: 1.5px solid var(--rose); }
+.cal-day.selected { background: var(--rose) !important; color: white !important; font-weight: 500; }
+.cal-day.past { color: #ddd; cursor: default; }
+.cal-day.empty { cursor: default; }
+
+/* ─── TIME SLOTS ─── */
+.section-label {
+  font-size: 11px; font-weight: 500; color: var(--text-soft);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  margin: 18px 0 10px;
+}
+.time-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.time-slot {
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.time-slot:active, .time-slot.selected {
+  border-color: var(--rose);
+  background: var(--rose-pale);
+}
+.ts-icon { font-size: 22px; margin-bottom: 5px; }
+.ts-name { font-size: 12px; font-weight: 500; color: var(--text); }
+.ts-time { font-size: 10px; color: var(--text-soft); margin-top: 2px; }
+
+.date-pill {
+  background: linear-gradient(135deg, var(--rose-pale), #ffe4ef);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: 8px 16px;
+  font-size: 13px; color: var(--rose-deep);
+  margin-bottom: 14px;
+  display: none;
+}
+.date-pill.show { display: block; }
+
+/* ─── ACTIVITIES ─── */
+.act-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.act-item {
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+.act-item:active { transform: scale(0.97); }
+.act-item.selected {
+  border-color: var(--rose);
+  background: var(--rose-pale);
+}
+.act-item.selected::after {
+  content: '✓';
+  position: absolute; top: 8px; right: 10px;
+  font-size: 12px; color: var(--rose); font-weight: 700;
+}
+.act-icon { font-size: 30px; margin-bottom: 8px; }
+.act-name { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.3; }
+
+/* ─── COMMENT ─── */
+.comment-area {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  background: var(--rose-pale);
+  resize: none;
+  min-height: 120px;
+  outline: none;
+  margin-bottom: 16px;
+  transition: border-color 0.2s;
+}
+.comment-area:focus { border-color: var(--rose); }
+
+/* ─── SUCCESS ─── */
+.success-screen {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 40px 32px;
+  text-align: center;
+  background: linear-gradient(160deg, #fff0f5, #fdf6f0);
+}
+.success-anim { font-size: 72px; margin-bottom: 20px; animation: bounce 0.6s ease; }
+@keyframes bounce {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.success-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 30px; font-weight: 600;
+  color: var(--rose-deep); margin-bottom: 10px;
+}
+.success-sub { font-size: 15px; color: var(--text-soft); line-height: 1.7; }
+
+/* ─── BOTTOM PADDING ─── */
+.pb { padding-bottom: 24px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ CONFIG SCREEN ═══ -->
+<div class="config-screen" id="configScreen">
+  <div class="config-logo">💌</div>
+  <div class="config-title">Sozlamalar</div>
+  <div class="config-sub">Bir marta kiriting, keyin ishlatishga tayyor!</div>
+  <div class="config-card">
+    <div class="config-label">Telegram Bot Token</div>
+    <input class="config-input" id="cfgToken" type="text" placeholder="123456789:AAHxxx..." autocomplete="off">
+
+    <div class="config-label">Sizning Chat ID</div>
+    <input class="config-input" id="cfgChatId" type="text" placeholder="123456789" autocomplete="off">
+
+    <div class="config-hint">
+      🤖 Bot token: <b>@BotFather</b> → /newbot<br>
+      🆔 Chat ID: <b>@userinfobot</b> ga /start yuboring
+    </div>
+
+    <button class="btn-primary" onclick="saveConfig()">Saqlash va boshlash 💕</button>
+  </div>
+</div>
+
+<!-- ═══ SURVEY ═══ -->
+<div class="survey" id="surveyWrap">
+
+  <!-- Step dots -->
+  <div class="step-bar">
+    <div class="step-dot active" id="sd0"></div>
+    <div class="step-dot" id="sd1"></div>
+    <div class="step-dot" id="sd2"></div>
+    <div class="step-dot" id="sd3"></div>
+  </div>
+
+  <!-- ── STEP 1 ── -->
+  <div class="step active" id="step1">
+    <div class="s1-wrap">
+      <canvas class="petals-canvas" id="petalCanvas"></canvas>
+      <div class="s1-emoji">💌</div>
+      <div class="s1-title">Shu hafta seni ko'rmoqchiman…</div>
+      <div class="s1-sub">Men bilan uchrashuvga<br>chiqishga tayyormisan?</div>
+      <div class="s1-buttons">
+        <button class="btn-yes" onclick="answerYes()">❤️ Ha, albatta!</button>
+        <button class="btn-no" id="noBtn" onclick="noEscape()">Yo'q</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STEP 2 ── -->
+  <div class="step" id="step2">
+    <div class="card">
+      <div class="card-title">📅 Qachon uchrashsak?</div>
+      <div class="card-sub">Qulay kun va vaqtni tanlang</div>
+
+      <div class="cal-nav-row">
+        <button class="cal-arrow" onclick="prevMonth()">‹</button>
+        <span class="cal-month" id="calMonthName"></span>
+        <button class="cal-arrow" onclick="nextMonth()">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+
+      <div class="date-pill" id="datePill">📅 —</div>
+
+      <div class="section-label">Kun vaqti</div>
+      <div class="time-grid">
+        <div class="time-slot" onclick="pickTime(this,'Kunduz','12:00–15:00','🌤️')">
+          <div class="ts-icon">🌤️</div>
+          <div class="ts-name">Kunduz</div>
+          <div class="ts-time">12:00–15:00</div>
+        </div>
+        <div class="time-slot" onclick="pickTime(this,'Peshin','15:00–18:00','🌅')">
+          <div class="ts-icon">🌅</div>
+          <div class="ts-name">Peshin</div>
+          <div class="ts-time">15:00–18:00</div>
+        </div>
+        <div class="time-slot" onclick="pickTime(this,'Kechqurun','18:00–22:00','🌙')">
+          <div class="ts-icon">🌙</div>
+          <div class="ts-name">Kechqurun</div>
+          <div class="ts-time">18:00–22:00</div>
+        </div>
+      </div>
+
+      <button class="btn-primary pb" id="s2Next" style="margin-top:20px" onclick="goStep(3)" disabled>Keyingisi →</button>
+    </div>
+  </div>
+
+  <!-- ── STEP 3 ── -->
+  <div class="step" id="step3">
+    <div class="card">
+      <div class="card-title">🎉 Nima qilsak yaxshi?</div>
+      <div class="card-sub">Bitta yoki bir nechtasini tanlang</div>
+      <div class="act-grid">
+        <div class="act-item" onclick="toggleAct(this,'🍽️ Birga ovqatlanishga borish')">
+          <div class="act-icon">🍽️</div>
+          <div class="act-name">Ovqatlanishga borish</div>
+        </div>
+        <div class="act-item" onclick="toggleAct(this,'🌳 Parkda sayr qilish')">
+          <div class="act-icon">🌳</div>
+          <div class="act-name">Park aylanish</div>
+        </div>
+        <div class="act-item" onclick="toggleAct(this,'🎬 Birga kino tomosha')">
+          <div class="act-icon">🎬</div>
+          <div class="act-name">Birga kino</div>
+        </div>
+        <div class="act-item" onclick="toggleAct(this,'⛰️ Tog\'ga sayohat')">
+          <div class="act-icon">⛰️</div>
+          <div class="act-name">Tog'ga borish</div>
+        </div>
+        <div class="act-item" onclick="toggleAct(this,'🎮 O\'yin o\'ynash')">
+          <div class="act-icon">🎮</div>
+          <div class="act-name">O'yin o'ynash</div>
+        </div>
+        <div class="act-item" onclick="toggleAct(this,'☕ Qahvaxonada suhbat')">
+          <div class="act-icon">☕</div>
+          <div class="act-name">Qahvaxonada suhbat</div>
+        </div>
+      </div>
+      <button class="btn-primary" id="s3Next" style="margin-top:20px" onclick="goStep(4)" disabled>Keyingisi →</button>
+    </div>
+  </div>
+
+  <!-- ── STEP 4 ── -->
+  <div class="step" id="step4">
+    <div class="card">
+      <div class="card-title">💬 Izoh qoldiring</div>
+      <div class="card-sub">Qo'shimcha fikr yoki taklif bormi? (ixtiyoriy)</div>
+      <textarea class="comment-area" id="commentBox" placeholder="Masalan: Shanba kuni qulay, yoki boshqa taklif..."></textarea>
+      <button class="btn-primary" id="sendBtn" onclick="sendSurvey()">💌 Yuborish</button>
+    </div>
+  </div>
+
+  <!-- ── SUCCESS ── -->
+  <div class="step" id="stepSuccess">
+    <div class="success-screen">
+      <div class="success-anim">🎉</div>
+      <div class="success-title">Yuborildi!</div>
+      <div class="success-sub">Javobingiz unga etib bordi.<br>Tez ko'rishguncha! ❤️</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── State ──
+const S = {
+  botToken: '', chatId: '',
+  ans1: '', selDate: null, selTime: '', acts: [], comment: ''
+};
+const MONTHS = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
+let calY, calM;
+
+// ── Telegram Web App ──
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+// ── Config ──
+function saveConfig() {
+  const t = document.getElementById('cfgToken').value.trim();
+  const c = document.getElementById('cfgChatId').value.trim();
+  if (!t || !c) { alert('Iltimos, token va Chat ID ni kiriting!'); return; }
+  S.botToken = t; S.chatId = c;
+  localStorage.setItem('uch_token', t);
+  localStorage.setItem('uch_chat', c);
+  document.getElementById('configScreen').style.display = 'none';
+  document.getElementById('surveyWrap').classList.add('show');
+  goStep(1);
+}
+
+// Auto-load saved config
+window.addEventListener('DOMContentLoaded', () => {
+  const t = localStorage.getItem('uch_token');
+  const c = localStorage.getItem('uch_chat');
+  if (t && c) {
+    S.botToken = t; S.chatId = c;
+    document.getElementById('cfgToken').value = t;
+    document.getElementById('cfgChatId').value = c;
+    document.getElementById('configScreen').style.display = 'none';
+    document.getElementById('surveyWrap').classList.add('show');
+    goStep(1);
+  }
+  initCal();
+});
+
+// ── Navigation ──
+let curStep = 1;
+function goStep(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  const id = n === 'success' ? 'stepSuccess' : 'step' + n;
+  document.getElementById(id).classList.add('active');
+  if (n !== 'success') {
+    curStep = n;
+    updateDots(n);
+    if (n === 2) renderCal();
+    if (n === 1) startPetals();
+  }
+  window.scrollTo(0, 0);
+}
+
+function updateDots(n) {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById('sd' + i);
+    d.className = 'step-dot';
+    if (i + 1 < n) d.classList.add('done');
+    else if (i + 1 === n) d.classList.add('active');
+  }
+}
+
+// ── Step 1 ──
+function answerYes() { S.ans1 = 'HA ❤️'; goStep(2); }
+
+let noMoves = 0;
+function noEscape() {
+  noMoves++;
+  const btn = document.getElementById('noBtn');
+  const bw = btn.offsetWidth + 20;
+  const bh = btn.offsetHeight + 20;
+  const maxX = window.innerWidth - bw;
+  const maxY = window.innerHeight - bh;
+  btn.style.left = Math.max(0, Math.random() * maxX) + 'px';
+  btn.style.top = Math.max(0, Math.random() * maxY) + 'px';
+  if (noMoves >= 5) {
+    btn.textContent = 'Yoʻq deya olmaysiz 😄';
+  }
+}
+
+// ── Petals ──
+function startPetals() {
+  const canvas = document.getElementById('petalCanvas');
+  if (!canvas) return;
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  const ctx = canvas.getContext('2d');
+  const petals = Array.from({length: 18}, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height - canvas.height,
+    size: 8 + Math.random() * 14,
+    speed: 0.6 + Math.random() * 1.2,
+    drift: (Math.random() - 0.5) * 0.8,
+    rotation: Math.random() * Math.PI * 2,
+    rotSpeed: (Math.random() - 0.5) * 0.04,
+    emoji: ['🌸','💮','🌺','🌹','💝'][Math.floor(Math.random() * 5)]
+  }));
+  let raf;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    petals.forEach(p => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.font = p.size + 'px serif';
+      ctx.globalAlpha = 0.55;
+      ctx.fillText(p.emoji, -p.size/2, p.size/2);
+      ctx.restore();
+      p.y += p.speed;
+      p.x += p.drift;
+      p.rotation += p.rotSpeed;
+      if (p.y > canvas.height + 20) {
+        p.y = -20;
+        p.x = Math.random() * canvas.width;
+      }
+    });
+    raf = requestAnimationFrame(draw);
+  }
+  draw();
+  setTimeout(() => cancelAnimationFrame(raf), 20000);
+}
+
+// ── Calendar ──
+function initCal() {
+  const now = new Date();
+  calY = now.getFullYear();
+  calM = now.getMonth();
+}
+
+function renderCal() {
+  document.getElementById('calMonthName').textContent = MONTHS[calM] + ' ' + calY;
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  ['Du','Se','Ch','Pa','Ju','Sh','Ya'].forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'cal-dow'; el.textContent = d;
+    grid.appendChild(el);
+  });
+  const first = new Date(calY, calM, 1);
+  let dow = first.getDay(); dow = dow === 0 ? 6 : dow - 1;
+  const days = new Date(calY, calM + 1, 0).getDate();
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+
+  for (let i = 0; i < dow; i++) {
+    const el = document.createElement('div'); el.className = 'cal-day empty'; grid.appendChild(el);
+  }
+  for (let d = 1; d <= days; d++) {
+    const el = document.createElement('div'); el.className = 'cal-day';
+    el.textContent = d;
+    const isPast = new Date(calY, calM, d) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    if (isPast) { el.classList.add('past'); }
+    else {
+      if (`${calY}-${calM}-${d}` === todayStr) el.classList.add('today');
+      if (S.selDate && S.selDate.y === calY && S.selDate.m === calM && S.selDate.d === d) el.classList.add('selected');
+      el.onclick = () => pickDay(el, d);
+    }
+    grid.appendChild(el);
+  }
+}
+
+function pickDay(el, d) {
+  document.querySelectorAll('.cal-day').forEach(x => x.classList.remove('selected'));
+  el.classList.add('selected');
+  S.selDate = { y: calY, m: calM, d };
+  updatePill();
+  checkStep2();
+}
+
+function updatePill() {
+  const pill = document.getElementById('datePill');
+  if (S.selDate) {
+    pill.textContent = `📅 ${S.selDate.d} ${MONTHS[S.selDate.m]} ${S.selDate.y}` + (S.selTime ? ` — ${S.selTime}` : '');
+    pill.classList.add('show');
+  }
+}
+
+function pickTime(el, name, time) {
+  document.querySelectorAll('.time-slot').forEach(x => x.classList.remove('selected'));
+  el.classList.add('selected');
+  S.selTime = name + ' (' + time + ')';
+  updatePill();
+  checkStep2();
+}
+
+function checkStep2() {
+  document.getElementById('s2Next').disabled = !(S.selDate && S.selTime);
+}
+
+function prevMonth() {
+  calM--; if (calM < 0) { calM = 11; calY--; } renderCal();
+}
+function nextMonth() {
+  calM++; if (calM > 11) { calM = 0; calY++; } renderCal();
+}
+
+// ── Activities ──
+function toggleAct(el, name) {
+  if (el.classList.contains('selected')) {
+    el.classList.remove('selected');
+    S.acts = S.acts.filter(a => a !== name);
+  } else {
+    el.classList.add('selected');
+    S.acts.push(name);
+  }
+  document.getElementById('s3Next').disabled = S.acts.length === 0;
+}
+
+// ── Send ──
+async function sendSurvey() {
+  S.comment = document.getElementById('commentBox').value.trim();
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true; btn.textContent = 'Yuborilmoqda...';
+
+  const { y, m, d } = S.selDate;
+  const msg =
+    `💌 *Uchrashuv so'rovnomasi javobi!*\n\n` +
+    `1️⃣ *Uchrashuv:* ${S.ans1}\n\n` +
+    `2️⃣ *Sana:* ${d} ${MONTHS[m]} ${y}\n` +
+    `   🕐 *Vaqt:* ${S.selTime}\n\n` +
+    `3️⃣ *Takliflar:*\n${S.acts.map(a => `   • ${a}`).join('\n')}\n\n` +
+    `4️⃣ *Izoh:* ${S.comment || '_(Izoh qoldirilmagan)_'}\n\n` +
+    `_📱 Telegram Mini App orqali yuborildi ❤️_`;
+
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${S.botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: S.chatId, text: msg, parse_mode: 'Markdown' })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('surveyWrap').querySelector('.step-bar').style.display = 'none';
+      goStep('success');
+      if (tg) setTimeout(() => tg.close(), 3000);
+    } else {
+      btn.disabled = false; btn.textContent = '💌 Yuborish';
+      alert('Xato: ' + data.description + '\n\nToken yoki Chat ID ni tekshiring!');
+    }
+  } catch(e) {
+    btn.disabled = false; btn.textContent = '💌 Yuborish';
+    alert('Tarmoq xatosi. Internetni tekshiring.');
+  }
+}
+</script>
+</body>
+</html>
