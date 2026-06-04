@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a0a12">
+<link rel="manifest" href="manifest.json">
+<title>💌 Taklif</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --rose: #e8356d;
+  --rose-light: #ff6b9d;
+  --rose-deep: #8b0a3c;
+  --gold: #d4a853;
+  --cream: #fdf6f0;
+  --bg-day: #fff0f5;
+  --bg-night: #0d0510;
+  --card-day: rgba(255,255,255,0.92);
+  --card-night: rgba(25,10,20,0.85);
+  --text-day: #2a1020;
+  --text-night: #f5e6ef;
+  --sub-day: #9c4d6a;
+  --sub-night: #c89ab0;
+  --border-day: rgba(232,53,109,0.2);
+  --border-night: rgba(232,53,109,0.3);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background 0.5s;
+}
+
+body.day {
+  background: linear-gradient(160deg, #fff0f5 0%, #fde8f0 50%, #fdf6f0 100%);
+  color: var(--text-day);
+}
+body.night {
+  background: linear-gradient(160deg, #0d0510 0%, #1a0518 50%, #0a0310 100%);
+  color: var(--text-night);
+}
+
+/* ── STARS (night) ── */
+.stars { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; display:none; }
+body.night .stars { display:block; }
+.star { position:absolute; border-radius:50%; background:white; animation: twinkle 3s ease-in-out infinite; }
+@keyframes twinkle { 0%,100%{opacity:0.2;transform:scale(1)} 50%{opacity:1;transform:scale(1.3)} }
+
+/* ── PETALS (day) ── */
+.petal-wrap { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; display:none; }
+body.day .petal-wrap { display:block; }
+
+/* ── TOGGLE ── */
+.mode-toggle {
+  position: fixed; top: 16px; right: 16px; z-index: 1000;
+  width: 48px; height: 48px; border-radius: 50%;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s;
+}
+body.day .mode-toggle { background: rgba(255,255,255,0.7); box-shadow: 0 2px 16px rgba(232,53,109,0.2); }
+body.night .mode-toggle { background: rgba(255,255,255,0.1); box-shadow: 0 2px 16px rgba(0,0,0,0.4); }
+
+/* ── LANG ── */
+.lang-bar {
+  position: fixed; top: 16px; left: 16px; z-index: 1000;
+  display: flex; gap: 6px;
+}
+.lang-btn {
+  padding: 5px 10px; border-radius: 20px; border: none;
+  font-size: 11px; font-weight: 600; cursor: pointer;
+  transition: all 0.2s; font-family: 'Nunito', sans-serif;
+}
+body.day .lang-btn { background: rgba(255,255,255,0.7); color: var(--sub-day); }
+body.day .lang-btn.active { background: var(--rose); color: white; }
+body.night .lang-btn { background: rgba(255,255,255,0.1); color: var(--sub-night); }
+body.night .lang-btn.active { background: var(--rose); color: white; }
+
+/* ── STEP DOTS ── */
+.step-dots {
+  display: flex; justify-content: center; gap: 8px;
+  padding: 20px 0 0; position: relative; z-index: 2;
+}
+.sdot {
+  height: 6px; border-radius: 3px; background: rgba(232,53,109,0.2);
+  transition: all 0.3s;
+}
+.sdot.active { background: var(--rose); width: 24px; }
+.sdot.done { background: rgba(232,53,109,0.5); width: 8px; }
+.sdot:not(.active):not(.done) { width: 8px; }
+
+/* ── WRAPPER ── */
+.app { max-width: 480px; margin: 0 auto; padding: 0 16px 32px; position: relative; z-index: 2; }
+
+/* ── CARD ── */
+.card {
+  border-radius: 24px; padding: 28px 24px;
+  margin-top: 12px;
+  backdrop-filter: blur(20px);
+  border: 1px solid;
+  transition: all 0.3s;
+}
+body.day .card { background: var(--card-day); border-color: var(--border-day); box-shadow: 0 8px 40px rgba(232,53,109,0.1); }
+body.night .card { background: var(--card-night); border-color: var(--border-night); box-shadow: 0 8px 40px rgba(0,0,0,0.4); }
+
+.card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px; font-weight: 600; margin-bottom: 4px;
+}
+body.day .card-title { color: var(--rose-deep); }
+body.night .card-title { color: #f5c0d8; }
+
+.card-sub { font-size: 13px; margin-bottom: 20px; }
+body.day .card-sub { color: var(--sub-day); }
+body.night .card-sub { color: var(--sub-night); }
+
+/* ── STEP 0: LANG CHOOSE / WELCOME ── */
+.welcome {
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 40px 24px; text-align: center; position: relative; z-index: 2;
+}
+.welcome-emoji { font-size: 70px; margin-bottom: 20px; animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+.welcome-title {
+  font-family: 'Playfair Display', serif; font-size: 32px;
+  margin-bottom: 8px;
+}
+body.day .welcome-title { color: var(--rose-deep); }
+body.night .welcome-title { color: #f5c0d8; }
+.welcome-sub { font-size: 15px; margin-bottom: 40px; }
+body.day .welcome-sub { color: var(--sub-day); }
+body.night .welcome-sub { color: var(--sub-night); }
+
+.lang-select { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 320px; margin-bottom: 24px; }
+.lang-card {
+  border-radius: 16px; padding: 16px 12px; text-align: center;
+  cursor: pointer; border: 1.5px solid; transition: all 0.2s;
+  font-family: 'Nunito', sans-serif;
+}
+body.day .lang-card { background: white; border-color: var(--border-day); }
+body.day .lang-card:hover, body.day .lang-card.selected { border-color: var(--rose); background: #fff0f5; }
+body.night .lang-card { background: rgba(255,255,255,0.07); border-color: var(--border-night); }
+body.night .lang-card:hover, body.night .lang-card.selected { border-color: var(--rose); background: rgba(232,53,109,0.1); }
+.lang-flag { font-size: 28px; margin-bottom: 6px; }
+.lang-name { font-size: 13px; font-weight: 600; }
+body.day .lang-name { color: var(--text-day); }
+body.night .lang-name { color: var(--text-night); }
+
+/* ── STEP 1: USERNAME ── */
+.input-group { margin-bottom: 16px; }
+.input-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; display: block; }
+body.day .input-label { color: var(--sub-day); }
+body.night .input-label { color: var(--sub-night); }
+.input-field {
+  width: 100%; padding: 13px 14px; border-radius: 14px;
+  font-size: 15px; font-family: 'Nunito', sans-serif;
+  border: 1.5px solid; outline: none; transition: border-color 0.2s;
+}
+body.day .input-field { background: #fff8fb; border-color: var(--border-day); color: var(--text-day); }
+body.day .input-field:focus { border-color: var(--rose); }
+body.night .input-field { background: rgba(255,255,255,0.07); border-color: var(--border-night); color: var(--text-night); }
+body.night .input-field:focus { border-color: var(--rose); }
+
+/* ── BTN PRIMARY ── */
+.btn {
+  width: 100%; padding: 15px; border-radius: 50px; border: none;
+  font-size: 16px; font-weight: 600; font-family: 'Nunito', sans-serif;
+  cursor: pointer; transition: all 0.2s; margin-top: 4px;
+}
+.btn-rose {
+  background: linear-gradient(135deg, var(--rose-light), var(--rose));
+  color: white; box-shadow: 0 4px 20px rgba(232,53,109,0.35);
+}
+.btn-rose:active { transform: scale(0.97); }
+.btn-rose:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ── STEP 2: YES/NO ── */
+.s2-hero {
+  min-height: calc(100vh - 80px);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 20px;
+  position: relative; z-index: 2;
+}
+.s2-icon { font-size: 72px; margin-bottom: 20px; animation: pulse 2s ease-in-out infinite; }
+.s2-title { font-family: 'Playfair Display', serif; font-size: 28px; margin-bottom: 10px; line-height: 1.3; }
+body.day .s2-title { color: var(--rose-deep); }
+body.night .s2-title { color: #f5c0d8; }
+.s2-sub { font-size: 15px; margin-bottom: 40px; }
+body.day .s2-sub { color: var(--sub-day); }
+body.night .s2-sub { color: var(--sub-night); }
+.s2-btns { width: 100%; max-width: 300px; }
+.btn-yes {
+  display: block; width: 100%;
+  background: linear-gradient(135deg, var(--rose-light), var(--rose));
+  color: white; border: none; border-radius: 50px;
+  padding: 17px; font-size: 18px; font-weight: 600;
+  font-family: 'Nunito', sans-serif; cursor: pointer;
+  margin-bottom: 14px;
+  box-shadow: 0 6px 24px rgba(232,53,109,0.4);
+  transition: transform 0.15s;
+}
+.btn-yes:active { transform: scale(0.97); }
+.btn-no {
+  position: fixed; z-index: 9999;
+  background: rgba(255,255,255,0.85); color: var(--rose);
+  border: 1.5px solid var(--rose); border-radius: 50px;
+  padding: 12px 28px; font-size: 15px; font-weight: 600;
+  font-family: 'Nunito', sans-serif; cursor: pointer;
+  backdrop-filter: blur(8px); white-space: nowrap;
+}
+body.night .btn-no { background: rgba(30,10,25,0.85); }
+
+/* ── STEP 3: CALENDAR ── */
+.cal-nav-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.cal-arrow {
+  width: 36px; height: 36px; border-radius: 10px; border: 1px solid;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; cursor: pointer; transition: all 0.15s;
+}
+body.day .cal-arrow { background: #fff0f5; border-color: var(--border-day); color: var(--rose); }
+body.night .cal-arrow { background: rgba(232,53,109,0.1); border-color: var(--border-night); color: var(--rose-light); }
+.cal-month { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 600; }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+.cal-dow { text-align: center; font-size: 10px; font-weight: 600; padding: 4px 0 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+body.day .cal-dow { color: var(--sub-day); }
+body.night .cal-dow { color: var(--sub-night); }
+.cal-day {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; border-radius: 50%; cursor: pointer; transition: all 0.15s;
+}
+body.day .cal-day:not(.past):not(.empty):hover { background: #ffe4ef; color: var(--rose); }
+body.night .cal-day:not(.past):not(.empty):hover { background: rgba(232,53,109,0.2); color: var(--rose-light); }
+.cal-day.today { font-weight: 600; color: var(--rose); border: 1.5px solid var(--rose); }
+.cal-day.selected { background: var(--rose) !important; color: white !important; font-weight: 600; }
+.cal-day.past { opacity: 0.25; cursor: default; }
+.cal-day.empty { cursor: default; }
+
+.section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin: 18px 0 10px; }
+body.day .section-label { color: var(--sub-day); }
+body.night .section-label { color: var(--sub-night); }
+
+.time-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.time-slot {
+  border-radius: 14px; padding: 12px 6px; text-align: center;
+  cursor: pointer; transition: all 0.15s; border: 1.5px solid;
+}
+body.day .time-slot { border-color: var(--border-day); background: white; }
+body.day .time-slot.selected, body.day .time-slot:active { border-color: var(--rose); background: #fff0f5; }
+body.night .time-slot { border-color: var(--border-night); background: rgba(255,255,255,0.05); }
+body.night .time-slot.selected, body.night .time-slot:active { border-color: var(--rose); background: rgba(232,53,109,0.12); }
+.ts-icon { font-size: 22px; margin-bottom: 5px; }
+.ts-name { font-size: 12px; font-weight: 600; }
+.ts-time { font-size: 10px; margin-top: 2px; }
+body.day .ts-name { color: var(--text-day); }
+body.day .ts-time { color: var(--sub-day); }
+body.night .ts-name { color: var(--text-night); }
+body.night .ts-time { color: var(--sub-night); }
+
+.date-pill {
+  border-radius: 50px; padding: 8px 16px; font-size: 13px; font-weight: 600;
+  margin-bottom: 14px; display: none; text-align: center;
+}
+body.day .date-pill { background: linear-gradient(135deg, #fff0f5, #ffe4ef); color: var(--rose-deep); border: 1px solid var(--border-day); }
+body.night .date-pill { background: rgba(232,53,109,0.15); color: #f5c0d8; border: 1px solid var(--border-night); }
+.date-pill.show { display: block; }
+
+/* ── STEP 4: ACTIVITIES ── */
+.act-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.act-item {
+  border-radius: 16px; padding: 16px 10px; text-align: center;
+  cursor: pointer; transition: all 0.15s; border: 1.5px solid; position: relative;
+}
+body.day .act-item { border-color: var(--border-day); background: white; }
+body.day .act-item.selected { border-color: var(--rose); background: #fff0f5; }
+body.night .act-item { border-color: var(--border-night); background: rgba(255,255,255,0.05); }
+body.night .act-item.selected { border-color: var(--rose); background: rgba(232,53,109,0.12); }
+.act-item:active { transform: scale(0.97); }
+.act-item.selected::after { content: '✓'; position: absolute; top: 7px; right: 10px; font-size: 12px; color: var(--rose); font-weight: 700; }
+.act-icon { font-size: 28px; margin-bottom: 7px; }
+.act-name { font-size: 12px; font-weight: 600; line-height: 1.3; }
+body.day .act-name { color: var(--text-day); }
+body.night .act-name { color: var(--text-night); }
+.act-badge {
+  font-size: 9px; font-weight: 700; background: var(--rose); color: white;
+  border-radius: 4px; padding: 1px 5px; margin-left: 4px; vertical-align: middle;
+}
+
+/* ── STEP 5: COMMENT ── */
+.comment-area {
+  width: 100%; padding: 14px; border-radius: 14px;
+  font-size: 14px; font-family: 'Nunito', sans-serif;
+  border: 1.5px solid; outline: none; resize: none;
+  min-height: 120px; margin-bottom: 16px; transition: border-color 0.2s;
+}
+body.day .comment-area { background: #fff8fb; border-color: var(--border-day); color: var(--text-day); }
+body.day .comment-area:focus { border-color: var(--rose); }
+body.night .comment-area { background: rgba(255,255,255,0.07); border-color: var(--border-night); color: var(--text-night); }
+body.night .comment-area:focus { border-color: var(--rose); }
+
+/* ── SUCCESS ── */
+.success-wrap {
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 40px 24px; text-align: center; position: relative; z-index: 2;
+}
+.success-emoji { font-size: 72px; margin-bottom: 20px; animation: bounce 0.7s ease; }
+@keyframes bounce { 0%{transform:scale(0.3);opacity:0} 70%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+.success-title { font-family: 'Playfair Display', serif; font-size: 30px; margin-bottom: 10px; }
+body.day .success-title { color: var(--rose-deep); }
+body.night .success-title { color: #f5c0d8; }
+.success-sub { font-size: 15px; line-height: 1.7; }
+body.day .success-sub { color: var(--sub-day); }
+body.night .success-sub { color: var(--sub-night); }
+
+/* ── SCROLL PAD ── */
+.pb32 { padding-bottom: 32px; }
+</style>
+</head>
+<body class="day">
+
+<div class="stars" id="stars"></div>
+<div class="petal-wrap" id="petalWrap"></div>
+
+<button class="mode-toggle" onclick="toggleMode()" id="modeBtn">🌙</button>
+<div class="lang-bar" id="langBar" style="display:none;">
+  <button class="lang-btn active" onclick="setLang('uz')">UZ</button>
+  <button class="lang-btn" onclick="setLang('ru')">RU</button>
+  <button class="lang-btn" onclick="setLang('en')">EN</button>
+  <button class="lang-btn" onclick="setLang('ko')">한</button>
+</div>
+
+<!-- ═══ WELCOME ═══ -->
+<div id="screenWelcome" class="welcome">
+  <div class="welcome-emoji">💌</div>
+  <div class="welcome-title" id="wTitle">Tilni tanlang</div>
+  <div class="welcome-sub" id="wSub">Choose your language</div>
+  <div class="lang-select">
+    <div class="lang-card" onclick="setLang('uz');startApp()">
+      <div class="lang-flag">🇺🇿</div>
+      <div class="lang-name">O'zbek</div>
+    </div>
+    <div class="lang-card" onclick="setLang('ru');startApp()">
+      <div class="lang-flag">🇷🇺</div>
+      <div class="lang-name">Русский</div>
+    </div>
+    <div class="lang-card" onclick="setLang('en');startApp()">
+      <div class="lang-flag">🇺🇸</div>
+      <div class="lang-name">English</div>
+    </div>
+    <div class="lang-card" onclick="setLang('ko');startApp()">
+      <div class="lang-flag">🇰🇷</div>
+      <div class="lang-name">한국어</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAIN APP ═══ -->
+<div id="screenApp" style="display:none;">
+  <div class="step-dots" id="stepDots">
+    <div class="sdot active" id="sd0"></div>
+    <div class="sdot" id="sd1"></div>
+    <div class="sdot" id="sd2"></div>
+    <div class="sdot" id="sd3"></div>
+    <div class="sdot" id="sd4"></div>
+  </div>
+
+  <div class="app">
+
+    <!-- STEP 1: USERNAME -->
+    <div id="step1" class="step-screen">
+      <div class="card">
+        <div class="card-title" id="s1Title">Kirish</div>
+        <div class="card-sub" id="s1Sub">Telegram username ingizni kiriting</div>
+        <div class="input-group">
+          <label class="input-label" id="s1Label">Telegram Username</label>
+          <input class="input-field" id="usernameInput" type="text" placeholder="@username" autocomplete="off" autocorrect="off">
+        </div>
+        <div class="input-group">
+          <label class="input-label" id="s1NameLabel">Ismingiz</label>
+          <input class="input-field" id="nameInput" type="text" placeholder="..." autocomplete="off">
+        </div>
+        <button class="btn btn-rose" id="s1Btn" onclick="goStep(2)">Davom etish →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: YES/NO -->
+    <div id="step2" class="step-screen" style="display:none;">
+      <div class="s2-hero">
+        <div class="s2-icon">💌</div>
+        <div class="s2-title" id="s2Title">Shu hafta men bilan uchrashuvga chiqishga tayyormisan?</div>
+        <div class="s2-sub" id="s2Sub">Menga javob ber! 🌹</div>
+        <div class="s2-btns">
+          <button class="btn-yes" onclick="answerYes()" id="yesBtn">❤️ Ha, albatta!</button>
+          <button class="btn-no" id="noBtn" onclick="noEscape()">Yo'q</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: CALENDAR -->
+    <div id="step3" class="step-screen" style="display:none;">
+      <div class="card pb32">
+        <div class="card-title" id="s3Title">📅 Qachon?</div>
+        <div class="card-sub" id="s3Sub">Qulay kun va vaqtni tanlang</div>
+        <div class="cal-nav-row">
+          <button class="cal-arrow" onclick="prevMonth()">‹</button>
+          <span class="cal-month" id="calMonthName"></span>
+          <button class="cal-arrow" onclick="nextMonth()">›</button>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="date-pill" id="datePill"></div>
+        <div class="section-label" id="timeLabel">Vaqt</div>
+        <div class="time-grid">
+          <div class="time-slot" onclick="pickTime(this,'Kunduz','12:00–15:00')">
+            <div class="ts-icon">🌤️</div>
+            <div class="ts-name" id="ts1n">Kunduz</div>
+            <div class="ts-time">12:00–15:00</div>
+          </div>
+          <div class="time-slot" onclick="pickTime(this,'Peshin','15:00–18:00')">
+            <div class="ts-icon">🌅</div>
+            <div class="ts-name" id="ts2n">Peshin</div>
+            <div class="ts-time">15:00–18:00</div>
+          </div>
+          <div class="time-slot" onclick="pickTime(this,'Kechqurun','18:00–22:00')">
+            <div class="ts-icon">🌙</div>
+            <div class="ts-name" id="ts3n">Kechqurun</div>
+            <div class="ts-time">18:00–22:00</div>
+          </div>
+        </div>
+        <button class="btn btn-rose" id="s3Btn" style="margin-top:20px;" onclick="goStep(4)" disabled>Davom etish →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: ACTIVITIES -->
+    <div id="step4" class="step-screen" style="display:none;">
+      <div class="card pb32">
+        <div class="card-title" id="s4Title">🎉 Nima qilsak?</div>
+        <div class="card-sub" id="s4Sub">Bir yoki bir nechtasini tanlang</div>
+        <div class="act-grid">
+          <div class="act-item" onclick="toggleAct(this,'🍽️ Ovqatlanishga borish')">
+            <div class="act-icon">🍽️</div>
+            <div class="act-name" id="a1">Ovqatlanishga borish</div>
+          </div>
+          <div class="act-item" onclick="toggleAct(this,'🌳 Parkda sayr')">
+            <div class="act-icon">🌳</div>
+            <div class="act-name" id="a2">Parkda sayr qilish</div>
+          </div>
+          <div class="act-item" onclick="toggleAct(this,'⛰️ Tog\'ga chiqish')">
+            <div class="act-icon">⛰️</div>
+            <div class="act-name" id="a3">Tog'ga chiqish</div>
+          </div>
+          <div class="act-item" onclick="toggleAct(this,'🎬 Kino ko\'rish')">
+            <div class="act-icon">🎬</div>
+            <div class="act-name" id="a4">Kino ko'rishga borish</div>
+          </div>
+          <div class="act-item" onclick="toggleAct(this,'☕ Qahvaxona')">
+            <div class="act-icon">☕</div>
+            <div class="act-name" id="a5">Qahvaxonada suhbat</div>
+          </div>
+          <div class="act-item" onclick="toggleAct(this,'🎮 O\'yin o\'ynash')">
+            <div class="act-icon">🎮</div>
+            <div class="act-name" id="a6">O'yin o'ynash</div>
+          </div>
+          <div class="act-item" onclick="toggleAct(this,'🎡 Attraktsion')">
+            <div class="act-icon">🎡</div>
+            <div class="act-name" id="a7">Attraktsionlar</div>
+          </div>
+          <div class="act-item" onclick="toggleAct(this,'😱 Horror film')">
+            <div class="act-icon">😱</div>
+            <div class="act-name" id="a8">Horror film ko'rish</div>
+          </div>
+          <div class="act-item" onclick="toggleAct(this,'🌊 Suv bo\'yi')">
+            <div class="act-icon">🌊</div>
+            <div class="act-name" id="a9">Suv bo'yida sayr</div>
+          </div>
+          <div class="act-item" onclick="toggleAct(this,'🔥 18+')">
+            <div class="act-icon">🔥</div>
+            <div class="act-name" id="a10">18+ <span class="act-badge">18+</span></div>
+          </div>
+        </div>
+        <button class="btn btn-rose" id="s4Btn" style="margin-top:20px;" onclick="goStep(5)" disabled>Davom etish →</button>
+      </div>
+    </div>
+
+    <!-- STEP 5: COMMENT -->
+    <div id="step5" class="step-screen" style="display:none;">
+      <div class="card">
+        <div class="card-title" id="s5Title">💬 Fikr va savollar</div>
+        <div class="card-sub" id="s5Sub">Qo'shimcha taklif yoki savollaringiz bormi?</div>
+        <textarea class="comment-area" id="commentBox" placeholder="..."></textarea>
+        <button class="btn btn-rose" id="sendBtn" onclick="sendSurvey()">💌 Yuborish</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ SUCCESS ═══ -->
+<div id="screenSuccess" style="display:none;">
+  <div class="success-wrap">
+    <div class="success-emoji">🎉</div>
+    <div class="success-title" id="sucTitle">Yuborildi!</div>
+    <div class="success-sub" id="sucSub">Javobingiz unga etib bordi.<br>Tez ko'rishguncha! ❤️</div>
+  </div>
+</div>
+
+<script>
+const BOT_TOKEN = "8884280049:AAHsyJwvV5yuLxUIT-n8H09Wkv0hJe2_9HM";
+const CHAT_ID = "622832045";
+
+const T = {
+  uz: {
+    wTitle:"Tilni tanlang", wSub:"Davom etish uchun tilni tanlang",
+    s1Title:"Kirish 💌", s1Sub:"Telegram username ingizni kiriting", s1Label:"Telegram Username", s1NameLabel:"Ismingiz", s1Btn:"Davom etish →",
+    s2Title:"Shu hafta men bilan uchrashuvga chiqishga tayyormisan? 🌹", s2Sub:"Menga javob ber!",
+    yesBtn:"❤️ Ha, albatta!", noBtn:"Yo'q",
+    s3Title:"📅 Qachon uchrashsak?", s3Sub:"Qulay kun va vaqtni tanlang", timeLabel:"Kun vaqti",
+    ts1:"Kunduz", ts2:"Peshin", ts3:"Kechqurun",
+    s3Btn:"Davom etish →",
+    s4Title:"🎉 Nima qilsak yaxshi?", s4Sub:"Bir yoki bir nechtasini tanlang",
+    s4Btn:"Davom etish →",
+    s5Title:"💬 Fikr va savollar", s5Sub:"Qo'shimcha taklif yoki savollaringiz bormi?",
+    s5Placeholder:"Masalan: Shanba kuni 19:00 da qulay...",
+    sendBtn:"💌 Yuborish",
+    sucTitle:"Yuborildi! 🎉", sucSub:"Javobingiz unga etib bordi.\nTez ko'rishguncha! ❤️",
+    a1:"Ovqatlanishga borish", a2:"Parkda sayr", a3:"Tog'ga chiqish", a4:"Kino ko'rish",
+    a5:"Qahvaxonada suhbat", a6:"O'yin o'ynash", a7:"Attraktsionlar", a8:"Horror film",
+    a9:"Suv bo'yida sayr", a10:"18+",
+    months:['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'],
+    dows:['Du','Se','Ch','Pa','Ju','Sh','Ya'],
+    msgHeader:"💌 Uchrashuv so'rovnomasi!",
+    msgFrom:"Kimdan", msgDate:"Sana", msgTime:"Vaqt", msgActs:"Takliflar", msgComment:"Izoh", msgNone:"(Izoh yo'q)"
+  },
+  ru: {
+    wTitle:"Выберите язык", wSub:"Продолжить на вашем языке",
+    s1Title:"Вход 💌", s1Sub:"Введите ваш Telegram username", s1Label:"Telegram Username", s1NameLabel:"Ваше имя", s1Btn:"Продолжить →",
+    s2Title:"Готова ли ты выйти на свидание со мной на этой неделе? 🌹", s2Sub:"Жду ответа!",
+    yesBtn:"❤️ Да, конечно!", noBtn:"Нет",
+    s3Title:"📅 Когда встретимся?", s3Sub:"Выберите удобный день и время", timeLabel:"Время дня",
+    ts1:"Днём", ts2:"Полдень", ts3:"Вечером",
+    s3Btn:"Продолжить →",
+    s4Title:"🎉 Чем займёмся?", s4Sub:"Выберите одно или несколько",
+    s4Btn:"Продолжить →",
+    s5Title:"💬 Вопросы и предложения", s5Sub:"Есть пожелания или вопросы?",
+    s5Placeholder:"Например: В субботу в 19:00 удобно...",
+    sendBtn:"💌 Отправить",
+    sucTitle:"Отправлено! 🎉", sucSub:"Ответ получен.\nДо скорой встречи! ❤️",
+    a1:"Пойти поесть", a2:"Прогулка в парке", a3:"На гору", a4:"В кино",
+    a5:"В кафе", a6:"Поиграть в игры", a7:"Аттракционы", a8:"Фильм ужасов",
+    a9:"Прогулка у воды", a10:"18+",
+    months:['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'],
+    dows:['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],
+    msgHeader:"💌 Анкета свидания!",
+    msgFrom:"От кого", msgDate:"Дата", msgTime:"Время", msgActs:"Предложения", msgComment:"Комментарий", msgNone:"(Без комментария)"
+  },
+  en: {
+    wTitle:"Choose Language", wSub:"Select your preferred language",
+    s1Title:"Sign In 💌", s1Sub:"Enter your Telegram username", s1Label:"Telegram Username", s1NameLabel:"Your Name", s1Btn:"Continue →",
+    s2Title:"Are you ready to go on a date with me this week? 🌹", s2Sub:"Tell me!",
+    yesBtn:"❤️ Yes, of course!", noBtn:"No",
+    s3Title:"📅 When shall we meet?", s3Sub:"Pick a day and time", timeLabel:"Time of Day",
+    ts1:"Afternoon", ts2:"Midday", ts3:"Evening",
+    s3Btn:"Continue →",
+    s4Title:"🎉 What shall we do?", s4Sub:"Pick one or more",
+    s4Btn:"Continue →",
+    s5Title:"💬 Questions & Suggestions", s5Sub:"Any extra thoughts?",
+    s5Placeholder:"e.g. Saturday at 7 PM works great...",
+    sendBtn:"💌 Send",
+    sucTitle:"Sent! 🎉", sucSub:"Your answer has been delivered.\nSee you soon! ❤️",
+    a1:"Go eat together", a2:"Walk in the park", a3:"Hike a mountain", a4:"Watch a movie",
+    a5:"Café chat", a6:"Play games", a7:"Amusement park", a8:"Horror movie",
+    a9:"Waterside walk", a10:"18+",
+    months:['January','February','March','April','May','June','July','August','September','October','November','December'],
+    dows:['Mo','Tu','We','Th','Fr','Sa','Su'],
+    msgHeader:"💌 Date Survey!",
+    msgFrom:"From", msgDate:"Date", msgTime:"Time", msgActs:"Activities", msgComment:"Comment", msgNone:"(No comment)"
+  },
+  ko: {
+    wTitle:"언어 선택", wSub:"언어를 선택하세요",
+    s1Title:"로그인 💌", s1Sub:"텔레그램 사용자 이름을 입력하세요", s1Label:"텔레그램 사용자명", s1NameLabel:"이름", s1Btn:"계속 →",
+    s2Title:"이번 주 나와 데이트할 준비가 됐어? 🌹", s2Sub:"대답해줘!",
+    yesBtn:"❤️ 응, 물론이야!", noBtn:"아니요",
+    s3Title:"📅 언제 만날까?", s3Sub:"편한 날짜와 시간을 골라줘", timeLabel:"시간대",
+    ts1:"낮", ts2:"정오", ts3:"저녁",
+    s3Btn:"계속 →",
+    s4Title:"🎉 뭐 할까?", s4Sub:"하나 또는 여러 개 선택",
+    s4Btn:"계속 →",
+    s5Title:"💬 의견 & 질문", s5Sub:"추가 제안이나 질문 있어?",
+    s5Placeholder:"예: 토요일 저녁 7시가 편해...",
+    sendBtn:"💌 보내기",
+    sucTitle:"전송됨! 🎉", sucSub:"답변이 전달됐어.\n곧 만나자! ❤️",
+    a1:"같이 밥 먹기", a2:"공원 산책", a3:"등산", a4:"영화 보기",
+    a5:"카페에서 수다", a6:"게임 하기", a7:"놀이공원", a8:"공포 영화",
+    a9:"물가 산책", a10:"18+",
+    months:['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'],
+    dows:['월','화','수','목','금','토','일'],
+    msgHeader:"💌 데이트 설문!",
+    msgFrom:"보낸 사람", msgDate:"날짜", msgTime:"시간", msgActs:"활동", msgComment:"댓글", msgNone:"(댓글 없음)"
+  }
+};
+
+let lang = 'uz';
+let isDark = false;
+let curStep = 1;
+let calY, calM;
+const S = { username:'', name:'', ans:'', date:null, time:'', acts:[], comment:'' };
+
+// ── Init ──
+window.addEventListener('DOMContentLoaded', () => {
+  initStars();
+  initCal();
+  applyLang();
+  const saved = localStorage.getItem('uch_lang');
+  if (saved) { lang = saved; startApp(); }
+});
+
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('uch_lang', l);
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  const map = {uz:0,ru:1,en:2,ko:3};
+  document.querySelectorAll('.lang-btn')[map[l]]?.classList.add('active');
+  applyLang();
+}
+
+function applyLang() {
+  const t = T[lang];
+  const ids = {
+    wTitle:'wTitle', wSub:'wSub',
+    s1Title:'s1Title', s1Sub:'s1Sub',
+    s1Btn:'s1Btn', s3Title:'s3Title', s3Sub:'s3Sub',
+    s4Title:'s4Title', s4Sub:'s4Sub', s4Btn:'s4Btn',
+    s5Title:'s5Title', s5Sub:'s5Sub', sendBtn:'sendBtn',
+    sucTitle:'sucTitle',
+    s2Title:'s2Title', s2Sub:'s2Sub',
+    ts1:'ts1n', ts2:'ts2n', ts3:'ts3n',
+    a1:'a1', a2:'a2', a3:'a3', a4:'a4', a5:'a5',
+    a6:'a6', a7:'a7', a8:'a8', a9:'a9'
+  };
+  Object.entries(ids).forEach(([key, id]) => {
+    const el = document.getElementById(id);
+    if (el && t[key]) el.textContent = t[key];
+  });
+  const a10el = document.getElementById('a10');
+  if (a10el) a10el.innerHTML = t.a10 + ' <span class="act-badge">18+</span>';
+  const s1Lbl = document.getElementById('s1Label');
+  if (s1Lbl) s1Lbl.textContent = t.s1Label;
+  const s1NLbl = document.getElementById('s1NameLabel');
+  if (s1NLbl) s1NLbl.textContent = t.s1NameLabel;
+  const tLabel = document.getElementById('timeLabel');
+  if (tLabel) tLabel.textContent = t.timeLabel;
+  const commentBox = document.getElementById('commentBox');
+  if (commentBox) commentBox.placeholder = t.s5Placeholder;
+  const yesBtn = document.getElementById('yesBtn');
+  if (yesBtn) yesBtn.textContent = t.yesBtn;
+  const noBtn = document.getElementById('noBtn');
+  if (noBtn) noBtn.textContent = t.noBtn;
+  const sucSub = document.getElementById('sucSub');
+  if (sucSub) sucSub.textContent = t.sucSub;
+  const s3Btn = document.getElementById('s3Btn');
+  if (s3Btn) s3Btn.textContent = t.s3Btn;
+  if (calY) renderCal();
+}
+
+function startApp() {
+  document.getElementById('screenWelcome').style.display = 'none';
+  document.getElementById('screenApp').style.display = 'block';
+  document.getElementById('langBar').style.display = 'flex';
+  applyLang();
+  goStep(1);
+}
+
+// ── Mode ──
+function toggleMode() {
+  isDark = !isDark;
+  document.body.className = isDark ? 'night' : 'day';
+  document.getElementById('modeBtn').textContent = isDark ? '☀️' : '🌙';
+}
+
+// ── Stars ──
+function initStars() {
+  const c = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 3 + 1;
+    s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*4}s;animation-duration:${2+Math.random()*3}s`;
+    c.appendChild(s);
+  }
+}
+
+// ── Steps ──
+function goStep(n) {
+  if (n === 1) {
+    // validate nothing yet
+  } else if (n === 2) {
+    const u = document.getElementById('usernameInput').value.trim();
+    const nm = document.getElementById('nameInput').value.trim();
+    if (!u || !nm) return;
+    S.username = u; S.name = nm;
+  }
+  document.querySelectorAll('.step-screen').forEach(s => s.style.display = 'none');
+  document.getElementById('step' + n).style.display = 'block';
+  curStep = n;
+  updateDots(n);
+  if (n === 3) renderCal();
+  if (n === 2) positionNoBtn();
+  window.scrollTo(0, 0);
+}
+
+function updateDots(n) {
+  for (let i = 0; i < 5; i++) {
+    const d = document.getElementById('sd' + i);
+    if (!d) continue;
+    d.className = 'sdot';
+    if (i + 1 < n) d.classList.add('done');
+    else if (i + 1 === n) d.classList.add('active');
+  }
+}
+
+// ── Step 2 ──
+function positionNoBtn() {
+  const btn = document.getElementById('noBtn');
+  btn.style.left = '50%'; btn.style.top = '75%';
+  btn.style.transform = 'translateX(-50%)';
+}
+
+function answerYes() {
+  S.ans = T[lang].yesBtn;
+  goStep(3);
+}
+
+let noCount = 0;
+function noEscape() {
+  noCount++;
+  const btn = document.getElementById('noBtn');
+  btn.style.transform = '';
+  const maxX = window.innerWidth - 120;
+  const maxY = window.innerHeight - 60;
+  btn.style.left = Math.max(10, Math.random() * maxX) + 'px';
+  btn.style.top = Math.max(10, Math.random() * maxY) + 'px';
+  if (noCount >= 4) btn.textContent = '😅';
+  if (noCount >= 7) btn.textContent = '🙈';
+}
+
+// ── Calendar ──
+function initCal() {
+  const now = new Date();
+  calY = now.getFullYear(); calM = now.getMonth();
+}
+
+function renderCal() {
+  const t = T[lang];
+  document.getElementById('calMonthName').textContent = t.months[calM] + ' ' + calY;
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  t.dows.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'cal-dow'; el.textContent = d; grid.appendChild(el);
+  });
+  const first = new Date(calY, calM, 1);
+  let dow = first.getDay(); dow = dow === 0 ? 6 : dow - 1;
+  const days = new Date(calY, calM + 1, 0).getDate();
+  const today = new Date();
+  for (let i = 0; i < dow; i++) {
+    const el = document.createElement('div'); el.className = 'cal-day empty'; grid.appendChild(el);
+  }
+  for (let d = 1; d <= days; d++) {
+    const el = document.createElement('div'); el.className = 'cal-day'; el.textContent = d;
+    const isPast = new Date(calY, calM, d) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    if (isPast) { el.classList.add('past'); }
+    else {
+      if (today.getFullYear()===calY && today.getMonth()===calM && today.getDate()===d) el.classList.add('today');
+      if (S.date && S.date.y===calY && S.date.m===calM && S.date.d===d) el.classList.add('selected');
+      el.onclick = () => pickDay(el, d);
+    }
+    grid.appendChild(el);
+  }
+}
+
+function pickDay(el, d) {
+  document.querySelectorAll('.cal-day').forEach(x => x.classList.remove('selected'));
+  el.classList.add('selected');
+  S.date = { y: calY, m: calM, d };
+  updatePill(); checkStep3();
+}
+
+function pickTime(el, name, time) {
+  document.querySelectorAll('.time-slot').forEach(x => x.classList.remove('selected'));
+  el.classList.add('selected');
+  S.time = name + ' (' + time + ')';
+  updatePill(); checkStep3();
+}
+
+function updatePill() {
+  const pill = document.getElementById('datePill');
+  if (S.date) {
+    pill.textContent = `📅 ${S.date.d} ${T[lang].months[S.date.m]} ${S.date.y}` + (S.time ? ` — ${S.time}` : '');
+    pill.classList.add('show');
+  }
+}
+
+function checkStep3() {
+  document.getElementById('s3Btn').disabled = !(S.date && S.time);
+}
+
+function prevMonth() { calM--; if(calM<0){calM=11;calY--;} renderCal(); }
+function nextMonth() { calM++; if(calM>11){calM=0;calY++;} renderCal(); }
+
+// ── Activities ──
+function toggleAct(el, name) {
+  if (el.classList.contains('selected')) {
+    el.classList.remove('selected');
+    S.acts = S.acts.filter(a => a !== name);
+  } else {
+    el.classList.add('selected');
+    S.acts.push(name);
+  }
+  document.getElementById('s4Btn').disabled = S.acts.length === 0;
+}
+
+// ── Send ──
+async function sendSurvey() {
+  S.comment = document.getElementById('commentBox').value.trim();
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true; btn.textContent = '⏳ ...';
+  const t = T[lang];
+  const { y, m, d } = S.date;
+  const msg =
+    `${t.msgHeader}\n\n` +
+    `👤 *${t.msgFrom}:* ${S.name} (${S.username})\n\n` +
+    `1️⃣ *Javob:* ${S.ans}\n\n` +
+    `2️⃣ *${t.msgDate}:* ${d} ${t.months[m]} ${y}\n` +
+    `   🕐 *${t.msgTime}:* ${S.time}\n\n` +
+    `3️⃣ *${t.msgActs}:*\n${S.acts.map(a=>`   • ${a}`).join('\n')}\n\n` +
+    `4️⃣ *${t.msgComment}:* ${S.comment || t.msgNone}\n\n` +
+    `_🌹 PWA orqali yuborildi_`;
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: CHAT_ID, text: msg, parse_mode: 'Markdown' })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('screenApp').style.display = 'none';
+      document.getElementById('screenSuccess').style.display = 'block';
+      document.getElementById('stepDots').style.display = 'none';
+    } else {
+      btn.disabled = false; btn.textContent = T[lang].sendBtn;
+      alert('Xato: ' + data.description);
+    }
+  } catch(e) {
+    btn.disabled = false; btn.textContent = T[lang].sendBtn;
+    alert('Tarmoq xatosi!');
+  }
+}
+</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js")}</script>
+</body>
+</html>
